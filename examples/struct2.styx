@@ -1,0 +1,11 @@
+@output linked_list.h
+
+@template LinkedList <- T
+typedef struct @t_name
+{
+    @T data;
+    
+    @t_name *next;
+} @t_name;
+
+@template LinkedList -> f32: LinkedListF32

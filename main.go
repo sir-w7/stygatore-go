@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"stygatore/styx"
@@ -14,9 +15,13 @@ import (
 // TODO(sir->w7): More flags for tweaking compilation settings.
 // TODO(sir->w7): Try out go tests.
 // TODO(sir->w7): Improve error handling.
+
+var wg sync.WaitGroup
+
 func GenerateFile(file string) {
+	defer wg.Done()
+
 	var file_info = styx.QueryFileInfo(file)
-	fmt.Printf("%+v", file_info)
 
 	defer styx.Profile(time.Now(), file_info.Filename)
 
@@ -65,6 +70,9 @@ func main() {
 
 	var fileList = styx.GetFileList(args[1:], "styx")
 	for _, file := range fileList {
+		wg.Add(1)
 		go GenerateFile(file)
 	}
+
+	wg.Wait()
 }

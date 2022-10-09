@@ -48,6 +48,15 @@ type Tokenizer struct {
 	line_at uint64
 }
 
+type TokenizerState struct {
+	tokens *Tokenizer
+
+	offset      int
+	next_offset int
+
+	line_at uint64
+}
+
 func TokenizeFile(file string) Tokenizer {
 	var file_data, err = os.ReadFile(file)
 	if err != nil {
@@ -59,11 +68,10 @@ func TokenizeFile(file string) Tokenizer {
 
 func (tokens *Tokenizer) token_inc_comment_line() {
 	for tokens.next_offset < len(tokens.file_data) &&
-		tokens.file_data[tokens.next_offset] != '\n' {
+		tokens.file_data[tokens.next_offset] != '\n' &&
+		tokens.file_data[tokens.next_offset] != '\r' {
 		tokens.next_offset++
 	}
-	tokens.next_offset++
-	tokens.line_at++
 }
 
 func (tokens *Tokenizer) token_inc_comment_block() {
@@ -75,10 +83,11 @@ func (tokens *Tokenizer) token_inc_comment_block() {
 		}
 		if tokens.file_data[tokens.next_offset] == '*' &&
 			tokens.file_data[tokens.next_offset+1] == '/' {
-			tokens.line_at += 2
-			return
+			break
 		}
 	}
+
+	tokens.next_offset += 2
 }
 
 func (tokens *Tokenizer) token_inc_whitespace() {
@@ -87,18 +96,22 @@ func (tokens *Tokenizer) token_inc_whitespace() {
 		tokens.line_at++
 	}
 
+outer:
 	for tokens.next_offset < len(tokens.file_data) {
 		tokens.next_offset++
+		if tokens.next_offset >= len(tokens.file_data) {
+			return
+		}
+
 		for _, ch := range whitespace_ch {
 			if tokens.file_data[tokens.next_offset] == ch {
-				return
+				if tokens.file_data[tokens.next_offset] == '\n' {
+					tokens.line_at++
+				}
+				continue outer
 			}
 		}
-	}
-
-	// What exactly does this do again?
-	if tokens.next_offset == '\n' {
-		tokens.line_at++
+		return
 	}
 }
 
@@ -111,6 +124,10 @@ func (tokens *Tokenizer) token_inc_def() {
 
 	for tokens.next_offset < len(tokens.file_data) {
 		tokens.next_offset++
+		if tokens.next_offset >= len(tokens.file_data) {
+			return
+		}
+
 		for _, ch := range delimiters {
 			if tokens.file_data[tokens.next_offset] == ch {
 				return
@@ -191,6 +208,9 @@ func (tokens *Tokenizer) GetAt() (tok Token) {
 		} else {
 			tok.Type = Token_Identifier
 		}
+
+	default:
+		tok.Type = Token_Identifier
 	}
 
 	if tokens.next_offset > tokens.offset {
@@ -223,4 +243,34 @@ func (tokens *Tokenizer) IncNoComment() (tok Token) {
 		}
 	}
 	return
+}
+
+func (tok Token) KnownStyxDirective() bool {
+	known_directives := [...]string{
+		"@output", "@template",
+	}
+
+	for _, str := range known_directives {
+		if tok.Str == str {
+			return true
+		}
+	}
+	return false
+}
+
+func NewTokenizerState(tokens *Tokenizer) (state TokenizerState) {
+	state.tokens = tokens
+
+	state.offset = tokens.offset
+	state.next_offset = tokens.next_offset
+
+	state.line_at = tokens.line_at
+
+	return
+}
+
+func (state *TokenizerState) Restore() {
+	state.tokens.offset = state.offset
+	state.tokens.next_offset = state.next_offset
+	state.tokens.line_at = state.line_at
 }

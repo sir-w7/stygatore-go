@@ -66,6 +66,6 @@ func QueryFileInfo(file string) FileInfo {
 }
 
 func Profile(time_start time.Time, name string) {
-	var elapsed = (time.Since(time_start)).Milliseconds()
-	fmt.Println(name, "<-", elapsed, "ms")
+	var elapsed = (time.Since(time_start)).Microseconds()
+	fmt.Printf("%s <- %.02f ms\n", name, float64(elapsed)/1000.0)
 }

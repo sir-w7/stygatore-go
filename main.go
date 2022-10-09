@@ -16,6 +16,8 @@ import (
 // TODO(sir->w7): Improve error handling.
 func GenerateFile(file string) {
 	var file_info = styx.QueryFileInfo(file)
+	fmt.Printf("%+v", file_info)
+
 	defer styx.Profile(time.Now(), file_info.Filename)
 
 	var compile_settings styx.CompilationSettings

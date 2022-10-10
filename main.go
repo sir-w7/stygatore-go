@@ -4,14 +4,18 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"stygatore/styx"
 )
 
+var wg sync.WaitGroup
+
 func GenerateFile(file string) {
+	defer wg.Done()
+
 	var file_info = styx.QueryFileInfo(file)
-	fmt.Printf("%+v", file_info)
 
 	defer styx.Profile(time.Now(), file_info.Filename)
 
@@ -60,6 +64,9 @@ func main() {
 
 	var fileList = styx.GetFileList(args[1:], "styx")
 	for _, file := range fileList {
+		wg.Add(1)
 		go GenerateFile(file)
 	}
+
+	wg.Wait()
 }

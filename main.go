@@ -9,11 +9,6 @@ import (
 	"stygatore/styx"
 )
 
-// TODO(sir->w7): Speed up program via caching templates.
-// TODO(sir->w7): Cap number of possible goroutines.
-// TODO(sir->w7): More flags for tweaking compilation settings.
-// TODO(sir->w7): Try out go tests.
-// TODO(sir->w7): Improve error handling.
 func GenerateFile(file string) {
 	var file_info = styx.QueryFileInfo(file)
 	fmt.Printf("%+v", file_info)

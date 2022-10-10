@@ -1,0 +1,6 @@
+1. Speed up program via caching templates.
+2. Cap number of possible goroutines.
+3. More flags for tweaking compilation settings.
+4. Try out go tests.
+5. Improve error handling.
+6. Develop true language agnostics and developer extensibility.
